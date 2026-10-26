@@ -1,0 +1,103 @@
+{
+  "title": "Pixoo Animation",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Выбрать Pixoo 64",
+        "description": "Выберите существующую интеграцию Divoom или введите адрес рамки. Локальный URL Home Assistant должен быть доступен рамке.",
+        "data": {
+          "name": "Название",
+          "pixoo_entry_id": "Интеграция Divoom Pixoo (необязательно)",
+          "host": "IPv4-адрес рамки",
+          "base_url": "Локальный URL Home Assistant"
+        }
+      },
+      "provider": {
+        "title": "Создание анимаций",
+        "description": "Генерация использует ваш платный Google API. Проверка настройки не создаёт видео. Для описания сцены можно выбрать существующую сущность AI Task.",
+        "data": {
+          "api_key": "Ключ Google Gemini API",
+          "video_model": "Модель Google для видео",
+          "director_model": "Модель Google для описания сцены",
+          "ai_task_entity": "AI Task для описания сцены (необязательно)",
+          "history_limit": "Количество сохраняемых заданий",
+          "keep_source": "Сохранять исходное видео и диагностические кадры"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect. Check the frame address, network and Google API access.",
+      "invalid_auth": "The Google API key was rejected.",
+      "invalid_ai_task": "Select an AI Task entity that supports text generation.",
+      "invalid_model": "Use a Google model ID, not a URL.",
+      "invalid_connection": "Check the frame IPv4 address and Home Assistant HTTP LAN URL.",
+      "already_configured": "This frame is already configured."
+    },
+    "abort": {
+      "already_configured": "This frame is already configured.",
+      "ffmpeg_missing": "FFmpeg is not installed. Home Assistant OS and Container include it; other installations must provide it."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Настройки анимаций",
+        "description": "Пустое поле ключа сохраняет текущий ключ. Уберите AI Task, чтобы использовать модель описания Google. Изменение настроек прерывает активное задание без автоматической повторной оплаты.",
+        "data": {
+          "host": "IPv4-адрес рамки",
+          "base_url": "Локальный URL Home Assistant",
+          "api_key": "Ключ Google Gemini API",
+          "video_model": "Модель Google для видео",
+          "director_model": "Модель Google для описания сцены",
+          "ai_task_entity": "AI Task для описания сцены (необязательно)",
+          "history_limit": "Количество сохраняемых заданий",
+          "keep_source": "Сохранять исходное видео и диагностические кадры"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect. Check the frame address, network and Google API access.",
+      "invalid_auth": "The Google API key was rejected.",
+      "invalid_ai_task": "Select an AI Task entity that supports text generation.",
+      "invalid_model": "Use a Google model ID, not a URL.",
+      "invalid_connection": "Check the frame IPv4 address and Home Assistant HTTP LAN URL.",
+      "already_configured": "This frame is already configured."
+    }
+  },
+  "entity": {
+    "text": {
+      "prompt": {
+        "name": "Сюжет"
+      },
+      "style": {
+        "name": "Стиль"
+      }
+    },
+    "button": {
+      "generate": {
+        "name": "Создать и показать"
+      },
+      "show": {
+        "name": "Показать сохранённую анимацию"
+      },
+      "delete": {
+        "name": "Удалить выбранную анимацию"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Состояние анимации"
+      }
+    },
+    "select": {
+      "gallery": {
+        "name": "Сохранённая анимация"
+      }
+    },
+    "image": {
+      "preview": {
+        "name": "Превью анимации"
+      }
+    }
+  }
+}

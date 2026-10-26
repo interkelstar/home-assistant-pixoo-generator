@@ -1,0 +1,103 @@
+{
+  "title": "Pixoo Animation",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose a Pixoo 64",
+        "description": "Select an existing Divoom integration or enter the frame address. The LAN URL must be reachable by the frame.",
+        "data": {
+          "name": "Name",
+          "pixoo_entry_id": "Existing Divoom Pixoo integration (optional)",
+          "host": "Frame IPv4 address",
+          "base_url": "Home Assistant LAN URL"
+        }
+      },
+      "provider": {
+        "title": "Animation generation",
+        "description": "Generation uses your paid Google API account. Setup only validates access; it does not generate a video. Optionally use an existing AI Task for scene direction.",
+        "data": {
+          "api_key": "Google Gemini API key",
+          "video_model": "Google video model",
+          "director_model": "Google scene-description model",
+          "ai_task_entity": "HA AI Task for scene description (optional)",
+          "history_limit": "Saved jobs",
+          "keep_source": "Keep source video and diagnostic frames"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect. Check the frame address, network and Google API access.",
+      "invalid_auth": "The Google API key was rejected.",
+      "invalid_ai_task": "Select an AI Task entity that supports text generation.",
+      "invalid_model": "Use a Google model ID, not a URL.",
+      "invalid_connection": "Check the frame IPv4 address and Home Assistant HTTP LAN URL.",
+      "already_configured": "This frame is already configured."
+    },
+    "abort": {
+      "already_configured": "This frame is already configured.",
+      "ffmpeg_missing": "FFmpeg is not installed. Home Assistant OS and Container include it; other installations must provide it."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Animation settings",
+        "description": "Leave the API key empty to keep the current key. Remove the optional AI Task selection to use the Google scene-description model. Changing settings interrupts an active generation; it will not be retried.",
+        "data": {
+          "host": "Frame IPv4 address",
+          "base_url": "Home Assistant LAN URL",
+          "api_key": "Google Gemini API key",
+          "video_model": "Google video model",
+          "director_model": "Google scene-description model",
+          "ai_task_entity": "HA AI Task for scene description (optional)",
+          "history_limit": "Saved jobs",
+          "keep_source": "Keep source video and diagnostic frames"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect. Check the frame address, network and Google API access.",
+      "invalid_auth": "The Google API key was rejected.",
+      "invalid_ai_task": "Select an AI Task entity that supports text generation.",
+      "invalid_model": "Use a Google model ID, not a URL.",
+      "invalid_connection": "Check the frame IPv4 address and Home Assistant HTTP LAN URL.",
+      "already_configured": "This frame is already configured."
+    }
+  },
+  "entity": {
+    "text": {
+      "prompt": {
+        "name": "Scene"
+      },
+      "style": {
+        "name": "Style"
+      }
+    },
+    "button": {
+      "generate": {
+        "name": "Create and display"
+      },
+      "show": {
+        "name": "Show saved animation"
+      },
+      "delete": {
+        "name": "Delete selected animation"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Animation status"
+      }
+    },
+    "select": {
+      "gallery": {
+        "name": "Saved animation"
+      }
+    },
+    "image": {
+      "preview": {
+        "name": "Animation preview"
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+generate:
+  name: Create animation
+  description: Generate a new animation and optionally display it. Returns a background job ID; queued is not delivered. Uses paid provider API credits.
+  fields:
+    entry_id:
+      name: Frame
+      description: Optional when exactly one Pixoo Animation instance is configured.
+      selector:
+        config_entry:
+          integration: pixoo_generator
+    text:
+      name: Scene
+      required: true
+      selector:
+        text:
+          multiline: true
+    style:
+      name: Style
+      selector:
+        text:
+    display:
+      name: Display when ready
+      default: true
+      selector:
+        boolean:
+    notify:
+      name: Allow completion notifications
+      description: Included in the completion event for your optional notification automation.
+      default: true
+      selector:
+        boolean:
+show:
+  name: Show saved animation
+  description: Send a saved animation to its frame without a new generation charge.
+  fields:
+    entry_id:
+      name: Frame
+      selector:
+        config_entry:
+          integration: pixoo_generator
+    job_id:
+      description: Optional; uses the selected gallery item when omitted.
+      selector:
+        text:
+    notify:
+      default: true
+      selector:
+        boolean:
+delete:
+  name: Delete saved animation
+  description: Delete a job and its files. Uses the selected gallery item if job_id is omitted.
+  fields:
+    entry_id:
+      name: Frame
+      selector:
+        config_entry:
+          integration: pixoo_generator
+    job_id:
+      selector:
+        text:
