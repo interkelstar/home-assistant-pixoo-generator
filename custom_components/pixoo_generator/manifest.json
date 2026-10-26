@@ -1,7 +1,6 @@
 {
   "domain": "pixoo_generator",
   "name": "Pixoo Animation",
-  "version": "2.0.0",
   "codeowners": [
     "@interkelstar"
   ],
@@ -11,8 +10,9 @@
     "http"
   ],
   "documentation": "https://github.com/interkelstar/home-assistant-pixoo-generator",
-  "issue_tracker": "https://github.com/interkelstar/home-assistant-pixoo-generator/issues",
-  "iot_class": "cloud_push",
   "integration_type": "service",
-  "requirements": []
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/interkelstar/home-assistant-pixoo-generator/issues",
+  "requirements": [],
+  "version": "2.0.0"
 }
