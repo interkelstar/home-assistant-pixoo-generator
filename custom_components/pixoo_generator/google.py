@@ -65,9 +65,15 @@ async def direction(hass, config, job):
         if response.status != 200:
             raise GenerationError(f"Scene preparation failed (HTTP {response.status}).")
         data = await response.json()
+    job["direction_usage"] = data.get("usageMetadata", {})
+    blocked = data.get("promptFeedback", {}).get("blockReason")
+    if blocked:
+        raise GenerationError("Google blocked this scene description. Try another scene.")
     candidates = data.get("candidates", [])
     if not candidates or candidates[0].get("finishReason") != "STOP":
-        raise GenerationError("Scene preparation did not complete.")
+        raise GenerationError(
+            "Google did not finish the scene description. No video was requested."
+        )
     text = " ".join(
         p["text"]
         for p in candidates[0].get("content", {}).get("parts", [])
@@ -75,7 +81,6 @@ async def direction(hass, config, job):
     )
     if not text or len(text) > 6000:
         raise GenerationError("Invalid scene description.")
-    job["direction_usage"] = data.get("usageMetadata", {})
     return text
 
 

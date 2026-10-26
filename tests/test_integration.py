@@ -285,6 +285,40 @@ class RuntimeTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(google.GenerationError):
                 await google.direction(self.hass, cfg, self.job)
 
+    async def test_google_blocked_incomplete_and_completed_direction(self):
+        response = AsyncMock()
+        response.__aenter__.return_value = response
+        response.status = 200
+        session = SimpleNamespace(post=Mock(return_value=response))
+        usage = {"promptTokenCount": 10}
+        with patch.object(google, "async_get_clientsession", return_value=session):
+            for data, error in [
+                ({"promptFeedback": {"blockReason": "PROHIBITED_CONTENT"}}, "blocked"),
+                ({"candidates": [{"finishReason": "MAX_TOKENS"}]}, "did not finish"),
+            ]:
+                response.json.return_value = {**data, "usageMetadata": usage}
+                with self.assertRaisesRegex(google.GenerationError, error):
+                    await google.direction(self.hass, self.config, self.job)
+                self.assertEqual(self.job["direction_usage"], usage)
+            response.json.return_value = {
+                "candidates": [
+                    {
+                        "finishReason": "STOP",
+                        "content": {
+                            "parts": [
+                                {"text": "private reasoning", "thought": True},
+                                {"text": "scene brief"},
+                            ]
+                        },
+                    }
+                ],
+                "usageMetadata": usage,
+            }
+            self.assertEqual(
+                await google.direction(self.hass, self.config, self.job), "scene brief"
+            )
+            self.assertEqual(session.post.call_count, 3)  # One request per invocation; no retries.
+
     async def test_frame_http_error_and_success_controls(self):
         response = AsyncMock()
         response.__aenter__.return_value = response
