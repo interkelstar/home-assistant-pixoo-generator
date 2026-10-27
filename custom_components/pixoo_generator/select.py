@@ -13,7 +13,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class PixooGallery(PixooEntity, SelectEntity):
     def choices(self):
         return {
-            f"{j['text'][:100]} · {j['id'][:8]}": k
+            f"{'★ ' if j.get('favorite') else ''}{j['text'][:100]} · {j['id'][:8]}": k
             for k, j in reversed(self.manager.jobs.items())
             if "render" in j
         }

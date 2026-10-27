@@ -11,6 +11,7 @@ from uuid import uuid4
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
 
 from . import google, transport
 from .const import BUSY_STATES, DEFAULT_HISTORY, DEFAULT_STYLE, DOMAIN, EVENT_JOB
@@ -48,6 +49,8 @@ class Manager:
         self.selected = data.get("selected")
         self.latest = data.get("latest")
         for job in self.jobs.values():
+            if job.get("status") == "delivered" and job.get("fetched_at"):
+                job.setdefault("last_displayed_at", job["fetched_at"])
             if job["status"] in BUSY_STATES:
                 job.update(
                     status="interrupted",
@@ -62,8 +65,11 @@ class Manager:
     async def save(self):
         async with self.save_lock:
             limit = int(self.config.get("history_limit", DEFAULT_HISTORY))
-            while len(self.jobs) > limit:
-                old = next((k for k in self.jobs if k != self.active), None)
+            while sum(not j.get("favorite", False) for j in self.jobs.values()) > limit:
+                old = next(
+                    (k for k, j in self.jobs.items() if k != self.active and not j.get("favorite")),
+                    None,
+                )
                 if old is None:
                     break
                 path = self.root / old
@@ -138,6 +144,44 @@ class Manager:
             raise
         return {"accepted": True, "status": "queued", "job_id": jid}
 
+    def catalog(self):
+        """Read-only metadata for Assist and automations; never expose download tokens."""
+        animations = []
+        for job in reversed(self.jobs.values()):
+            if "render" not in job:
+                continue
+            item = {k: job.get(k) for k in ("text", "style", "created_at", "last_displayed_at")}
+            created = dt_util.parse_datetime(job.get("created_at", ""))
+            item.update(
+                job_id=job["id"],
+                favorite=bool(job.get("favorite")),
+                created_local_date=dt_util.as_local(created).date().isoformat()
+                if created
+                else None,
+            )
+            animations.append(item)
+        displayed = max(
+            (j for j in self.jobs.values() if j.get("last_displayed_at") and "render" in j),
+            key=lambda j: j["last_displayed_at"],
+            default=None,
+        )
+        return {
+            "animations": animations,
+            "last_displayed_job_id": displayed["id"] if displayed else None,
+            "history_limit": int(self.config.get("history_limit", DEFAULT_HISTORY)),
+        }
+
+    async def favorite(self, favorite=True, job_id=None):
+        jid = job_id or self.catalog()["last_displayed_job_id"]
+        job = self.jobs.get(jid)
+        if not job or "render" not in job:
+            raise ServiceValidationError(
+                "Choose an existing animation; no confirmed display is available."
+            )
+        job["favorite"] = favorite
+        await self.save()
+        return {"job_id": jid, "favorite": favorite, "text": job["text"]}
+
     async def run(self, job):
         try:
             await self.update(job, "planning")
@@ -206,7 +250,9 @@ class Manager:
                     "The frame accepted the command but its download was not confirmed."
                 ) from None
             device_state = await transport.post(self.hass, host, {"Command": "Channel/GetIndex"})
-            await self.update(job, "delivered", device_state=device_state)
+            await self.update(
+                job, "delivered", device_state=device_state, last_displayed_at=stamp()
+            )
         finally:
             self.downloads.pop(job["id"], None)
 

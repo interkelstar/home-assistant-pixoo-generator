@@ -58,3 +58,28 @@ delete:
     job_id:
       selector:
         text:
+list_animations:
+  name: List saved animations
+  description: Read descriptions, creation dates, favorites and the last confirmed displayed animation. No generation, display or billing. Local dates use Home Assistant's timezone.
+  fields:
+    entry_id:
+      name: Frame
+      selector:
+        config_entry:
+          integration: pixoo_generator
+favorite:
+  name: Keep an animation as a favorite
+  description: Favorites are protected from automatic history cleanup. Without job_id, uses the last confirmed displayed animation, not an unshown gallery preview. Removing the favorite subjects it to normal retention again. Explicit deletion still removes favorites.
+  fields:
+    entry_id:
+      name: Frame
+      selector:
+        config_entry:
+          integration: pixoo_generator
+    job_id:
+      selector:
+        text:
+    favorite:
+      default: true
+      selector:
+        boolean:

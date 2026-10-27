@@ -227,6 +227,84 @@ class RuntimeTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue((self.m.root / "new/animation.gif").exists())
         self.assertEqual(self.m.selected, "new")
 
+    async def test_favorites_survive_cleanup_and_reload(self):
+        self.m.config["history_limit"] = 1
+        self.m.jobs = {
+            k: {
+                **self.job,
+                "id": k,
+                "status": "delivered",
+                "render": {"frames": 2},
+                "favorite": k == "kept",
+            }
+            for k in ["kept", "old", "new"]
+        }
+        for k in self.m.jobs:
+            (self.m.root / k).mkdir(parents=True)
+            (self.m.root / k / "animation.gif").write_bytes(b"GIF89a")
+        await self.m.save()
+        self.assertEqual(set(self.m.jobs), {"kept", "new"})
+        self.assertTrue((self.m.root / "kept/animation.gif").exists())
+        self.assertFalse((self.m.root / "old").exists())
+        self.store.async_load.return_value = self.store.async_save.await_args.args[0]
+        await self.m.load()
+        self.assertTrue(self.m.jobs["kept"]["favorite"])
+        await self.m.favorite(False, "kept")
+        self.assertNotIn("kept", self.m.jobs)
+        self.assertFalse((self.m.root / "kept").exists())
+        self.assertIn("new", self.m.jobs)
+
+    async def test_catalog_and_save_current_ignore_unshown_selection(self):
+        self.m.jobs = {
+            "shown": {
+                **self.job,
+                "id": "shown",
+                "render": {"frames": 2},
+                "created_at": "2026-10-26T12:00:00+00:00",
+                "last_displayed_at": "2026-10-27T10:00:00+00:00",
+            },
+            "preview": {**self.job, "id": "preview", "render": {"frames": 2}},
+            "failed": {**self.job, "id": "failed"},
+        }
+        self.m.selected = "preview"
+        catalog = self.m.catalog()
+        self.assertEqual(catalog["last_displayed_job_id"], "shown")
+        self.assertEqual({j["job_id"] for j in catalog["animations"]}, {"shown", "preview"})
+        for item in catalog["animations"]:
+            self.assertNotIn("ticket", item)
+            self.assertNotIn("direction", item)
+        result = await self.m.favorite()
+        self.assertEqual(result["job_id"], "shown")
+        self.assertTrue(self.m.jobs["shown"]["favorite"])
+        self.assertFalse(self.m.jobs["preview"].get("favorite", False))
+        with self.assertRaises(Exception):
+            await self.m.favorite(job_id="failed")
+        with self.assertRaises(Exception):
+            await self.m.favorite(job_id="missing")
+
+    async def test_old_delivery_migrates_without_paid_calls(self):
+        self.store.async_load.return_value = {
+            "jobs": {
+                "old": {
+                    **self.job,
+                    "id": "old",
+                    "status": "delivered",
+                    "render": {},
+                    "fetched_at": "2026-10-26T20:00:00+00:00",
+                },
+                "failed": {
+                    **self.job,
+                    "id": "failed",
+                    "status": "failed",
+                    "render": {},
+                    "fetched_at": "2026-10-26T21:00:00+00:00",
+                },
+            }
+        }
+        await self.m.load()
+        self.assertEqual(self.m.catalog()["last_displayed_job_id"], "old")
+        self.assertEqual(self.tasks, [])
+
     async def test_restart_keeps_gallery_and_does_not_repeat_generation(self):
         completed = {**self.job, "id": "done", "status": "delivered", "render": {"frames": 2}}
         self.store.async_load.return_value = {

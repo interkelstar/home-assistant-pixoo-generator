@@ -94,6 +94,24 @@ animation), and `notify`. It shows a cached GIF **without generating another vid
 `pixoo_generator.delete` deletes the selected/job ID and its files; deletion is blocked
 while a job is active. Use the gallery dropdown to choose the preview/show/delete target.
 
+## Recall and favorites
+
+`pixoo_generator.list_animations` returns saved descriptions, full `job_id` values,
+creation timestamps, `created_local_date` in HA's timezone, favorite flags and
+`last_displayed_job_id`. It is read-only and excludes failed jobs without a GIF,
+provider credentials and download tokens. Expose a wrapper script to Assist so
+it can find "yesterday's animation" and call `show` with the returned ID. When
+several scenes match an ambiguous request, the assistant should ask which one.
+
+`pixoo_generator.favorite` with `favorite: true` keeps an animation outside the
+normal history limit. Pass `job_id`, or omit it to save the last successfully
+sent animation. Selecting a gallery preview alone does not change that default.
+Favorites have a star in the gallery and survive restarts/updates. Set
+`favorite: false` to return to normal retention (an old item may then be removed).
+Explicit `delete` still deletes a favorite; removing the integration deletes its
+gallery. Favorites are persistent storage, not an independent backup, and their
+count is not capped by the ordinary history limit.
+
 ## Completion and notifications
 
 The integration fires `pixoo_generator_job` with `entry_id`, `job_id`, `status`,
@@ -129,13 +147,13 @@ They survive restarts, integration reloads and HACS updates. Do not edit them wh
 integration is loaded. Include them in your normal HA backup.
 
 By default the last **20 jobs** are kept (configurable 1–100). Old job folders and index
-entries are removed together. A failed request also counts as a job. Lowering the limit
-removes older jobs. There is no separate favorites/archive exemption.
+entries are removed together. Favorites are excluded from this limit. A failed request also counts as a job. Lowering the limit
+removes older non-favorite jobs; favorites stay until explicitly unpinned or deleted.
 
 Normal output is a GIF, preview and small metadata file. Source MP4 and contact sheets
 are retained only with **Keep source video and diagnostic frames** enabled. Changing
 that option affects future jobs; it does not erase existing source videos. The provider
-input is limited to 30 MB; this is a count-bounded gallery, not an exact disk quota.
+input is limited to 30 MB; the limit bounds ordinary history, not favorites or exact disk usage.
 
 Explicitly removing the integration entry deletes **that entry's gallery**. HACS
 updates and ordinary reloads do not. Export or back up animations you want to keep

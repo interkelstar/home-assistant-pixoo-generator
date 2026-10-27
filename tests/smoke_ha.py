@@ -71,6 +71,15 @@ async def main():
                 states = [s for s in hass.states.async_all() if "test_frame" in s.entity_id]
                 print("entities", [(s.entity_id, s.state) for s in states], flush=True)
                 assert len(states) == 8, [(s.entity_id, s.state) for s in states]
+                catalog = await hass.services.async_call(
+                    "pixoo_generator",
+                    "list_animations",
+                    {"entry_id": entry.entry_id},
+                    blocking=True,
+                    return_response=True,
+                )
+                assert catalog["animations"] == [] and catalog["last_displayed_job_id"] is None
+                assert hass.services.has_service("pixoo_generator", "favorite")
                 prompt = next(
                     s.entity_id
                     for s in states

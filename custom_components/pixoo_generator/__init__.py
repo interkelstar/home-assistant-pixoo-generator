@@ -27,6 +27,13 @@ SHOW_SCHEMA = vol.Schema(
     {**COMMON, vol.Optional("job_id"): cv.string, vol.Optional("notify", default=True): cv.boolean}
 )
 DELETE_SCHEMA = vol.Schema({**COMMON, vol.Optional("job_id"): cv.string})
+FAVORITE_SCHEMA = vol.Schema(
+    {
+        **COMMON,
+        vol.Optional("job_id"): cv.string,
+        vol.Optional("favorite", default=True): cv.boolean,
+    }
+)
 
 
 class AnimationView(HomeAssistantView):
@@ -99,6 +106,13 @@ async def async_setup(hass, config):
         manager = resolve(hass, data.pop("entry_id", None))
         await manager.delete(**data)
 
+    async def list_animations(call):
+        return resolve(hass, call.data.get("entry_id")).catalog()
+
+    async def favorite(call):
+        data = dict(call.data)
+        return await resolve(hass, data.pop("entry_id", None)).favorite(**data)
+
     hass.services.async_register(
         DOMAIN,
         "generate",
@@ -110,6 +124,20 @@ async def async_setup(hass, config):
         DOMAIN, "show", show, schema=SHOW_SCHEMA, supports_response=SupportsResponse.OPTIONAL
     )
     hass.services.async_register(DOMAIN, "delete", delete, schema=DELETE_SCHEMA)
+    hass.services.async_register(
+        DOMAIN,
+        "list_animations",
+        list_animations,
+        schema=vol.Schema(COMMON),
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "favorite",
+        favorite,
+        schema=FAVORITE_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
     return True
 
 
